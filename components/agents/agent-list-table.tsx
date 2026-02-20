@@ -2,21 +2,32 @@
 
 import Link from "next/link";
 import { useTransition } from "react";
-import { CalendarDays, Eye, PencilLine, Plus, Rocket, Sparkles, Tag } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { CalendarDays, Eye, PencilLine, Rocket, Sparkles, Tag } from "lucide-react";
 import type { AgentRecord } from "@/lib/repositories/agents";
 import { toast } from "sonner";
-import { deleteAgentAction, togglePublishAgentAction } from "@/lib/actions/agent-actions";
+import {
+  deleteAgentAction,
+  subscribeToAgentAction,
+  togglePublishAgentAction,
+  unsubscribeFromAgentAction
+} from "@/lib/actions/agent-actions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
+type AgentListMode = "manage" | "available" | "subscribed";
+
 export function AgentListTable({
   agents,
-  canManage
+  mode,
+  canManage = false
 }: {
   agents: AgentRecord[];
-  canManage: boolean;
+  mode: AgentListMode;
+  canManage?: boolean;
 }) {
   const [pending, startTransition] = useTransition();
+  const router = useRouter();
 
   const buildAgentImage = (agent: AgentRecord) => {
     const initials = agent.name
@@ -55,6 +66,7 @@ export function AgentListTable({
       try {
         await togglePublishAgentAction(agentId, next);
         toast.success(next ? "Agent published" : "Agent unpublished");
+        router.refresh();
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Failed to update agent");
       }
@@ -66,8 +78,33 @@ export function AgentListTable({
       try {
         await deleteAgentAction(agentId);
         toast.success("Agent deleted");
+        router.refresh();
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Failed to delete agent");
+      }
+    });
+  };
+
+  const subscribe = (agentId: string) => {
+    startTransition(async () => {
+      try {
+        await subscribeToAgentAction(agentId);
+        toast.success("Agent subscribed");
+        router.refresh();
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Failed to subscribe agent");
+      }
+    });
+  };
+
+  const unsubscribe = (agentId: string) => {
+    startTransition(async () => {
+      try {
+        await unsubscribeFromAgentAction(agentId);
+        toast.success("Agent unsubscribed");
+        router.refresh();
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Failed to unsubscribe agent");
       }
     });
   };
@@ -132,22 +169,53 @@ export function AgentListTable({
               </div>
 
               <div className="flex flex-wrap gap-2">
-                {canManage ? (
+                {mode === "manage" && canManage ? (
                   <Button asChild size="sm" variant="outline">
                     <Link href={`/dashboard/agents/${agent.id}/edit`}>
                       <PencilLine className="mr-2 h-4 w-4" />
                       Edit
                     </Link>
                   </Button>
-                ) : (
+                ) : null}
+
+                {mode === "available" ? (
+                  <>
+                    <Button asChild size="sm" variant="outline">
+                      <Link href={`/agent/${agent.slug}`}>
+                        <Eye className="mr-2 h-4 w-4" />
+                        View details
+                      </Link>
+                    </Button>
+                    <Button size="sm" disabled={pending} onClick={() => subscribe(agent.id)}>
+                      Subscribe
+                    </Button>
+                  </>
+                ) : null}
+
+                {mode === "subscribed" ? (
+                  <>
+                    <Button asChild size="sm" variant="outline">
+                      <Link href={`/agent/${agent.slug}`}>
+                        <Eye className="mr-2 h-4 w-4" />
+                        View details
+                      </Link>
+                    </Button>
+                    <Button size="sm" variant="secondary" disabled={pending} onClick={() => unsubscribe(agent.id)}>
+                      Unsubscribe
+                    </Button>
+                  </>
+                ) : null}
+
+                {mode === "manage" && !canManage ? (
                   <Button asChild size="sm" variant="outline">
                     <Link href={`/agent/${agent.slug}`}>
-                      <Plus className="mr-2 h-4 w-4" />
-                      Subscribe
+                      <Eye className="mr-2 h-4 w-4" />
+                      View details
                     </Link>
                   </Button>
-                )}
-                {canManage ? (
+                ) : null}
+
+                {mode === "manage" && canManage ? (
                   <Button
                     size="sm"
                     variant="secondary"
@@ -158,7 +226,7 @@ export function AgentListTable({
                     {agent.isPublished ? "Unpublish" : "Publish"}
                   </Button>
                 ) : null}
-                {canManage ? (
+                {mode === "manage" && canManage ? (
                   <Button size="sm" variant="destructive" disabled={pending} onClick={() => deleteAgent(agent.id)}>
                     Delete
                   </Button>

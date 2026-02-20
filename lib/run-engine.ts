@@ -33,8 +33,8 @@ export async function executeAgentRun(params: {
   const supabase = getSupabaseServerClient();
 
   const { data: agent, error: agentError } = await supabase
-    .from("subscribed_agents")
-    .select("id,name,slug,category,is_published,premium_only,free_try_enabled")
+    .from("available_agents")
+    .select("*")
     .eq("id", agentId)
     .maybeSingle();
 
@@ -48,11 +48,11 @@ export async function executeAgentRun(params: {
 
   const plan: Plan = await getCurrentPlan(orgId);
 
-  if (agent.premium_only && plan === "FREE") {
+  if ((agent.premiumOnly ?? agent.premiumonly ?? false) && plan === "FREE") {
     throw new UpgradeRequiredError("UPGRADE_REQUIRED");
   }
 
-  if (!agent.free_try_enabled && plan === "FREE") {
+  if (!agent.free_trial_enabled && plan === "FREE") {
     throw new UpgradeRequiredError("FREE_TRY_DISABLED");
   }
 

@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getServerAuthSession } from "@/lib/auth";
-import { getAgentBySlug } from "@/lib/repositories/agents";
+import { getCurrentMembership, getServerAuthSession } from "@/lib/auth";
+import { getAgentBySlug, isAgentSubscribed } from "@/lib/repositories/agents";
 import { PublicNav } from "@/components/layout/public-nav";
 import { PublicFooter } from "@/components/layout/public-footer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RunAgentForm } from "@/components/marketplace/run-agent-form";
+import { SubscribeAgentButton } from "@/components/marketplace/subscribe-agent-button";
 
 const prompts = [
   "Summarize this project update for executive leadership.",
@@ -24,6 +25,12 @@ export default async function AgentDetailPage({ params }: { params: { slug: stri
 
   if (!agent || !agent.isPublished) {
     notFound();
+  }
+
+  let subscribed = false;
+  if (session?.user?.id) {
+    const membership = await getCurrentMembership();
+    subscribed = await isAgentSubscribed(membership.orgId, agent.id);
   }
 
   return (
@@ -70,11 +77,13 @@ export default async function AgentDetailPage({ params }: { params: { slug: stri
                 Author organization: {agent.org?.name || "Unknown organization"}
               </p>
               <div className="flex gap-2">
-                <Button asChild className="flex-1">
-                  <Link href={session?.user ? "/dashboard/billing" : `/auth/sign-in?callbackUrl=/dashboard/billing`}>
-                    Subscribe
-                  </Link>
-                </Button>
+                {session?.user ? (
+                  <SubscribeAgentButton agentId={agent.id} isSubscribed={subscribed} />
+                ) : (
+                  <Button asChild className="flex-1">
+                    <Link href={`/auth/sign-in?callbackUrl=/agent/${agent.slug}`}>Subscribe</Link>
+                  </Button>
+                )}
                 <Button asChild variant="outline" className="flex-1">
                   <Link href="/marketplace">Back</Link>
                 </Button>

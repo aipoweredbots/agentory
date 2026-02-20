@@ -13,7 +13,7 @@ async function uniqueAgentSlug(base: string, agentId?: string) {
   let slug = slugify(base) || `agent-${Date.now()}`;
 
   for (let attempt = 0; attempt < 10; attempt += 1) {
-    const { data: conflict } = await supabase.from("subscribed_agents").select("id").eq("slug", slug).maybeSingle();
+    const { data: conflict } = await supabase.from("available_agents").select("id").eq("slug", slug).maybeSingle();
     if (!conflict || conflict.id === agentId) {
       return slug;
     }
@@ -31,8 +31,7 @@ export async function createAgentAction(values: AgentFormValues) {
   const slug = await uniqueAgentSlug(payload.name);
   const supabase = getSupabaseServerClient();
 
-  const { error } = await supabase.from("subscribed_agents").insert({
-    org_id: membership.orgId,
+  const { error } = await supabase.from("available_agents").insert({
     name: payload.name,
     slug,
     category: payload.category,
@@ -42,8 +41,8 @@ export async function createAgentAction(values: AgentFormValues) {
       .filter(Boolean),
     short_description: payload.shortDescription,
     long_description: payload.longDescription,
-    premium_only: payload.premiumOnly,
-    free_try_enabled: payload.premiumOnly ? false : payload.freeTryEnabled,
+    premiumonly: payload.premiumOnly,
+    free_trial_enabled: payload.premiumOnly ? false : payload.freeTryEnabled,
     is_featured: payload.isFeatured,
     is_published: false
   });
@@ -64,10 +63,9 @@ export async function updateAgentAction(agentId: string, values: AgentFormValues
   const supabase = getSupabaseServerClient();
 
   const { data: current, error: findError } = await supabase
-    .from("subscribed_agents")
+    .from("available_agents")
     .select("id,name,slug")
     .eq("id", agentId)
-    .eq("org_id", membership.orgId)
     .maybeSingle();
 
   if (findError) {
@@ -81,7 +79,7 @@ export async function updateAgentAction(agentId: string, values: AgentFormValues
   const slug = payload.name !== current.name ? await uniqueAgentSlug(payload.name, current.id) : current.slug;
 
   const { error: updateError } = await supabase
-    .from("subscribed_agents")
+    .from("available_agents")
     .update({
       name: payload.name,
       slug,
@@ -92,12 +90,11 @@ export async function updateAgentAction(agentId: string, values: AgentFormValues
         .filter(Boolean),
       short_description: payload.shortDescription,
       long_description: payload.longDescription,
-      premium_only: payload.premiumOnly,
-      free_try_enabled: payload.premiumOnly ? false : payload.freeTryEnabled,
+      premiumonly: payload.premiumOnly,
+      free_trial_enabled: payload.premiumOnly ? false : payload.freeTryEnabled,
       is_featured: payload.isFeatured
     })
-    .eq("id", agentId)
-    .eq("org_id", membership.orgId);
+    .eq("id", agentId);
 
   if (updateError) {
     throw new Error(`AGENT_UPDATE_FAILED: ${updateError.message}`);
@@ -116,10 +113,9 @@ export async function togglePublishAgentAction(agentId: string, publish: boolean
   const supabase = getSupabaseServerClient();
 
   const { data: agent, error: findError } = await supabase
-    .from("subscribed_agents")
+    .from("available_agents")
     .select("id,slug")
     .eq("id", agentId)
-    .eq("org_id", membership.orgId)
     .maybeSingle();
 
   if (findError) {
@@ -131,10 +127,9 @@ export async function togglePublishAgentAction(agentId: string, publish: boolean
   }
 
   const { error: updateError } = await supabase
-    .from("subscribed_agents")
+    .from("available_agents")
     .update({ is_published: publish })
-    .eq("id", agentId)
-    .eq("org_id", membership.orgId);
+    .eq("id", agentId);
 
   if (updateError) {
     throw new Error(`AGENT_PUBLISH_UPDATE_FAILED: ${updateError.message}`);
@@ -151,13 +146,81 @@ export async function deleteAgentAction(agentId: string) {
   requireRole(membership, [RoleEnum.ADMIN]);
   const supabase = getSupabaseServerClient();
 
-  const { error } = await supabase.from("subscribed_agents").delete().eq("id", agentId).eq("org_id", membership.orgId);
+  const { error } = await supabase.from("available_agents").delete().eq("id", agentId);
 
   if (error) {
     throw new Error(`AGENT_DELETE_FAILED: ${error.message}`);
   }
 
   revalidatePath("/dashboard/agents");
+  revalidatePath("/marketplace");
+  return { success: true };
+}
+
+export async function subscribeToAgentAction(agentId: string) {
+  const membership = await getCurrentMembership();
+  const supabase = getSupabaseServerClient();
+
+  const { data: agent, error: agentError } = await supabase
+    .from("available_agents")
+    .select("id,is_published")
+    .eq("id", agentId)
+    .maybeSingle();
+
+  if (agentError) {
+    throw new Error(`AGENT_QUERY_FAILED: ${agentError.message}`);
+  }
+
+  if (!agent || !agent.is_published) {
+    throw new Error("AGENT_NOT_AVAILABLE");
+  }
+
+  const { data: existing, error: existingError } = await supabase
+    .from("subscribed_agents")
+    .select("agent_id")
+    .eq("org_id", membership.orgId)
+    .eq("agent_id", agentId)
+    .maybeSingle();
+
+  if (existingError) {
+    throw new Error(`AGENT_SUBSCRIBE_CHECK_FAILED: ${existingError.message}`);
+  }
+
+  if (existing) {
+    return { success: true };
+  }
+
+  const { error } = await supabase.from("subscribed_agents").insert({
+    org_id: membership.orgId,
+    agent_id: agentId
+  });
+
+  if (error) {
+    throw new Error(`AGENT_SUBSCRIBE_FAILED: ${error.message}`);
+  }
+
+  revalidatePath("/dashboard/agents");
+  revalidatePath("/dashboard/marketplace");
+  revalidatePath("/marketplace");
+  return { success: true };
+}
+
+export async function unsubscribeFromAgentAction(agentId: string) {
+  const membership = await getCurrentMembership();
+  const supabase = getSupabaseServerClient();
+
+  const { error } = await supabase
+    .from("subscribed_agents")
+    .delete()
+    .eq("org_id", membership.orgId)
+    .eq("agent_id", agentId);
+
+  if (error) {
+    throw new Error(`AGENT_UNSUBSCRIBE_FAILED: ${error.message}`);
+  }
+
+  revalidatePath("/dashboard/agents");
+  revalidatePath("/dashboard/marketplace");
   revalidatePath("/marketplace");
   return { success: true };
 }

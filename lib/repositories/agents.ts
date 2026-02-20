@@ -2,7 +2,7 @@ import { getSupabaseServerClient } from "@/lib/supabase-server";
 
 export type AgentRecord = {
   id: string;
-  orgId: string;
+  orgId: string | null;
   name: string;
   slug: string;
   category: string;
@@ -24,7 +24,6 @@ export type AgentRecord = {
 
 type AgentRow = {
   id: string;
-  org_id: string;
   name: string;
   slug: string;
   category: string;
@@ -34,20 +33,16 @@ type AgentRow = {
   is_featured: boolean;
   is_published: boolean;
   free_trial_enabled: boolean;
-  premiumOnly: boolean;
+  premiumOnly?: boolean;
+  premiumonly?: boolean;
   created_at: string;
   updated_at: string;
-  organizations?: {
-    id: string;
-    name: string;
-    slug: string;
-  } | null;
 };
 
 function mapAgent(row: AgentRow): AgentRecord {
   return {
     id: row.id,
-    orgId: row.org_id,
+    orgId: null,
     name: row.name,
     slug: row.slug,
     category: row.category,
@@ -57,16 +52,9 @@ function mapAgent(row: AgentRow): AgentRecord {
     isFeatured: row.is_featured,
     isPublished: row.is_published,
     freeTryEnabled: row.free_trial_enabled,
-    premiumOnly: row.premiumOnly,
+    premiumOnly: row.premiumOnly ?? row.premiumonly ?? false,
     createdAt: new Date(row.created_at),
-    updatedAt: new Date(row.updated_at),
-    org: row.organizations
-      ? {
-          id: row.organizations.id,
-          name: row.organizations.name,
-          slug: row.organizations.slug
-        }
-      : undefined
+    updatedAt: new Date(row.updated_at)
   };
 }
 
@@ -74,7 +62,7 @@ export async function getFeaturedAgents(limit = 3): Promise<AgentRecord[]> {
   const supabase = getSupabaseServerClient();
 
   const { data, error } = await supabase
-    .from("subscribed_agents")
+    .from("available_agents")
     .select("*")
     .eq("is_published", true)
     .eq("is_featured", true)
@@ -98,7 +86,7 @@ export async function getPublishedAgents(params?: {
   const category = params?.category?.trim();
 
   let request = supabase
-    .from("subscribed_agents")
+    .from("available_agents")
     .select("*")
     .eq("is_published", true)
     .order("is_featured", { ascending: false })
@@ -135,7 +123,7 @@ export async function getPublishedAgents(params?: {
 export async function getAgentCategories() {
   const supabase = getSupabaseServerClient();
 
-  const { data, error } = await supabase.from("subscribed_agents").select("category").eq("is_published", true);
+  const { data, error } = await supabase.from("available_agents").select("category").eq("is_published", true);
 
   if (error) {
     throw new Error(`Failed to fetch categories: ${error.message}`);
@@ -150,8 +138,8 @@ export async function getAgentBySlug(slug: string) {
   const supabase = getSupabaseServerClient();
 
   const { data, error } = await supabase
-    .from("subscribed_agents")
-    .select("*, organizations ( id, name, slug )")
+    .from("available_agents")
+    .select("*")
     .eq("slug", slug)
     .eq("is_published", true)
     .maybeSingle();
@@ -169,39 +157,72 @@ export async function getAgentBySlug(slug: string) {
 
 export async function getAvailableAgents(orgId: string) {
   const supabase = getSupabaseServerClient();
-  const { data, error } = await supabase
-    .from("available_agents")
-    .select("*")
-    .order("created_at", { ascending: false });
+  const [{ data: subscriptions, error: subscriptionsError }, { data, error }] = await Promise.all([
+    supabase.from("subscribed_agents").select("agent_id").eq("org_id", orgId),
+    supabase.from("available_agents").select("*").eq("is_published", true).order("created_at", { ascending: false })
+  ]);
+
+  if (subscriptionsError) {
+    throw new Error(`Failed to fetch subscriptions: ${subscriptionsError.message}`);
+  }
 
   if (error) {
     throw new Error(`Failed to fetch available agents: ${error.message}`);
   }
 
-  return (data as AgentRow[]).map(mapAgent);
+  const subscribedIds = new Set((subscriptions || []).map((row) => row.agent_id as string));
+  return (data as AgentRow[]).filter((agent) => !subscribedIds.has(agent.id)).map(mapAgent);
 }
 
 export async function getOrgAgents(orgId: string) {
   const supabase = getSupabaseServerClient();
-  const { data, error } = await supabase
+  const { data: subscriptions, error: subscriptionsError } = await supabase
     .from("subscribed_agents")
+    .select("agent_id")
+    .eq("org_id", orgId);
+
+  if (subscriptionsError) {
+    throw new Error(`Failed to fetch org subscriptions: ${subscriptionsError.message}`);
+  }
+
+  const agentIds = (subscriptions || []).map((row) => row.agent_id as string);
+  if (!agentIds.length) {
+    return [];
+  }
+
+  const { data: agents, error } = await supabase
+    .from("available_agents")
     .select("*")
-    .eq("org_id", orgId)
+    .in("id", agentIds)
     .order("created_at", { ascending: false });
 
   if (error) {
     throw new Error(`Failed to fetch org agents: ${error.message}`);
   }
 
-  return (data);
+  return (agents as AgentRow[]).map(mapAgent);
 }
 
 export async function getOrgAgentById(orgId: string, agentId: string) {
   const supabase = getSupabaseServerClient();
-  const { data, error } = await supabase
+  const { data: subscription, error: subscriptionError } = await supabase
     .from("subscribed_agents")
-    .select("*")
+    .select("agent_id")
     .eq("org_id", orgId)
+    .eq("agent_id", agentId)
+    .maybeSingle();
+
+  if (subscriptionError) {
+    throw new Error(`Failed to fetch org agent subscription: ${subscriptionError.message}`);
+  }
+
+  if (!subscription) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from("available_agents")
+    .select("*")
     .eq("id", agentId)
     .maybeSingle();
 
@@ -210,4 +231,20 @@ export async function getOrgAgentById(orgId: string, agentId: string) {
   }
 
   return data ? mapAgent(data as AgentRow) : null;
+}
+
+export async function isAgentSubscribed(orgId: string, agentId: string) {
+  const supabase = getSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("subscribed_agents")
+    .select("agent_id")
+    .eq("org_id", orgId)
+    .eq("agent_id", agentId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Failed to check subscribed agent: ${error.message}`);
+  }
+
+  return Boolean(data);
 }

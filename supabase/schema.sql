@@ -43,9 +43,8 @@ create table if not exists memberships (
   unique(user_id, org_id)
 );
 
-create table if not exists agents (
+create table if not exists available_agents (
   id uuid primary key default gen_random_uuid(),
-  org_id uuid not null references organizations(id) on delete cascade,
   name text not null,
   slug text unique not null,
   category text not null,
@@ -54,10 +53,18 @@ create table if not exists agents (
   long_description text not null,
   is_featured boolean not null default false,
   is_published boolean not null default false,
-  free_try_enabled boolean not null default true,
-  premium_only boolean not null default false,
+  free_trial_enabled boolean not null default true,
+  premiumOnly boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
+);
+
+create table if not exists subscribed_agents (
+  org_id uuid not null references organizations(id) on delete cascade,
+  agent_id uuid not null references available_agents(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  primary key (org_id, agent_id)
 );
 
 create table if not exists subscriptions (
@@ -76,7 +83,7 @@ create table if not exists usage_ledger (
   id uuid primary key default gen_random_uuid(),
   org_id uuid not null references organizations(id) on delete cascade,
   user_id uuid not null references users(id) on delete cascade,
-  agent_id uuid references agents(id) on delete set null,
+  agent_id uuid references available_agents(id) on delete set null,
   action_count integer not null,
   credit_count integer not null,
   created_at timestamptz not null default now()
@@ -109,7 +116,7 @@ create table if not exists runs (
   id uuid primary key default gen_random_uuid(),
   org_id uuid not null references organizations(id) on delete cascade,
   user_id uuid not null references users(id) on delete cascade,
-  agent_id uuid not null references agents(id) on delete cascade,
+  agent_id uuid not null references available_agents(id) on delete cascade,
   input text not null,
   output text not null,
   credits_consumed integer not null,
@@ -117,8 +124,10 @@ create table if not exists runs (
   created_at timestamptz not null default now()
 );
 
-create index if not exists idx_agents_published_featured on agents (is_published, is_featured);
-create index if not exists idx_agents_category on agents (category);
+create index if not exists idx_available_agents_published_featured on available_agents (is_published, is_featured);
+create index if not exists idx_available_agents_category on available_agents (category);
+create index if not exists idx_subscribed_agents_org on subscribed_agents (org_id);
+create index if not exists idx_subscribed_agents_agent on subscribed_agents (agent_id);
 create index if not exists idx_memberships_org on memberships (org_id);
 create index if not exists idx_usage_ledger_org_created on usage_ledger (org_id, created_at);
 create index if not exists idx_runs_org_created on runs (org_id, created_at);
@@ -127,7 +136,8 @@ create index if not exists idx_runs_org_created on runs (org_id, created_at);
 alter table users enable row level security;
 alter table organizations enable row level security;
 alter table memberships enable row level security;
-alter table agents enable row level security;
+alter table available_agents enable row level security;
+alter table subscribed_agents enable row level security;
 alter table subscriptions enable row level security;
 alter table usage_ledger enable row level security;
 alter table usage_month enable row level security;
@@ -136,5 +146,5 @@ alter table runs enable row level security;
 
 -- Example permissive read policy for published agents
 create policy if not exists "public_read_published_agents"
-  on agents for select
+  on available_agents for select
   using (is_published = true);

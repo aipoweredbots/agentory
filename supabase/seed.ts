@@ -21,8 +21,8 @@ const agents = [
     long_description:
       "Upload code snippets and get architecture, correctness, and security observations tuned for engineering teams.",
     is_featured: true,
-    premium_only: false,
-    free_try_enabled: true
+    premiumonly: false,
+    free_trial_enabled: true
   },
   {
     name: "Landing Page Copy Crafter",
@@ -33,8 +33,8 @@ const agents = [
     long_description:
       "Create headline variants, CTA copy, and audience-specific sections using proven persuasion frameworks.",
     is_featured: true,
-    premium_only: false,
-    free_try_enabled: true
+    premiumonly: false,
+    free_trial_enabled: true
   },
   {
     name: "Sales Discovery Assistant",
@@ -45,8 +45,8 @@ const agents = [
     long_description:
       "Turn rough call inputs into structured opportunity summaries, objection maps, and next-step playbooks.",
     is_featured: false,
-    premium_only: false,
-    free_try_enabled: true
+    premiumonly: false,
+    free_trial_enabled: true
   },
   {
     name: "Interview Question Builder",
@@ -57,8 +57,8 @@ const agents = [
     long_description:
       "Generate competency-based question sets with scoring rubrics for structured and fair hiring processes.",
     is_featured: false,
-    premium_only: false,
-    free_try_enabled: true
+    premiumonly: false,
+    free_trial_enabled: true
   },
   {
     name: "Financial Scenario Planner",
@@ -69,8 +69,8 @@ const agents = [
     long_description:
       "Run what-if analyses on revenue, margin, and hiring assumptions with concise executive summaries.",
     is_featured: true,
-    premium_only: true,
-    free_try_enabled: false
+    premiumonly: true,
+    free_trial_enabled: false
   },
   {
     name: "Outbound Sequence Composer",
@@ -80,8 +80,8 @@ const agents = [
     short_description: "Designs personalized outbound sequences.",
     long_description: "Generate multi-touch outbound plans with message variants and channel-specific sequencing.",
     is_featured: false,
-    premium_only: true,
-    free_try_enabled: true
+    premiumonly: true,
+    free_trial_enabled: true
   },
   {
     name: "Policy Drafter",
@@ -91,8 +91,8 @@ const agents = [
     short_description: "Drafts internal HR and operational policies.",
     long_description: "Create clean policy documents and rollout guidance tailored to org size and geography.",
     is_featured: false,
-    premium_only: false,
-    free_try_enabled: true
+    premiumonly: false,
+    free_trial_enabled: true
   },
   {
     name: "Churn Rescue Strategist",
@@ -103,8 +103,8 @@ const agents = [
     long_description:
       "Use customer behavior summaries to produce proactive save plays and lifecycle communications.",
     is_featured: false,
-    premium_only: true,
-    free_try_enabled: true
+    premiumonly: true,
+    free_trial_enabled: true
   },
   {
     name: "API Documentation Refiner",
@@ -115,8 +115,8 @@ const agents = [
     long_description:
       "Convert rough endpoint notes into complete docs with examples, error cases, and implementation tips.",
     is_featured: false,
-    premium_only: false,
-    free_try_enabled: true
+    premiumonly: false,
+    free_trial_enabled: true
   },
   {
     name: "Board Update Summarizer",
@@ -127,8 +127,8 @@ const agents = [
     long_description:
       "Generate concise, decision-ready summaries from KPI snapshots and milestone updates.",
     is_featured: false,
-    premium_only: true,
-    free_try_enabled: false
+    premiumonly: true,
+    free_trial_enabled: false
   }
 ];
 
@@ -164,11 +164,10 @@ async function main() {
   }
 
   for (const agent of agents) {
-    const { error: agentError } = await supabase.from("subscribed_agents").upsert(
+    const { error: agentError } = await supabase.from("available_agents").upsert(
       {
         ...agent,
-        is_published: true,
-        org_id: org.id
+        is_published: true
       },
       { onConflict: "slug" }
     );
