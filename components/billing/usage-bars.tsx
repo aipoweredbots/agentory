@@ -18,11 +18,12 @@ export function UsageBars({
   const actionsPercent = actionsTotal ? (actionsUsed / actionsTotal) * 100 : 0;
 
   return (
-    <div className="space-y-5 rounded-lg border bg-card p-4">
+    <div className="surface space-y-5 p-5">
+      <h3 className="font-[var(--font-heading)] text-lg font-bold">Usage</h3>
       <div className="space-y-2">
         <div className="flex items-center justify-between text-sm">
           <span>Credits</span>
-          <span>
+          <span className="font-medium">
             {formatNumber(creditsUsed)} / {formatNumber(creditsTotal)}
           </span>
         </div>
@@ -31,7 +32,7 @@ export function UsageBars({
       <div className="space-y-2">
         <div className="flex items-center justify-between text-sm">
           <span>Actions</span>
-          <span>
+          <span className="font-medium">
             {formatNumber(actionsUsed)} / {formatNumber(actionsTotal)}
           </span>
         </div>

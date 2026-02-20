@@ -35,7 +35,7 @@ export function InviteForm() {
   });
 
   return (
-    <form className="grid gap-3 md:grid-cols-[1fr_160px_auto]" onSubmit={onSubmit}>
+    <form className="grid gap-3 md:grid-cols-[1fr_180px_auto]" onSubmit={onSubmit}>
       <div className="space-y-2">
         <Label htmlFor="inviteEmail">Email</Label>
         <Input id="inviteEmail" type="email" placeholder="teammate@company.com" {...form.register("email")} />
@@ -50,7 +50,7 @@ export function InviteForm() {
         </Select>
       </div>
       <div className="flex items-end">
-        <Button disabled={pending} type="submit">
+        <Button disabled={pending} type="submit" variant="premium">
           Invite
         </Button>
       </div>

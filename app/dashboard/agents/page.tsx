@@ -1,7 +1,10 @@
 import Link from "next/link";
+import { Bot, Store } from "lucide-react";
 import { getCurrentMembership, requirePageAuth } from "@/lib/auth";
 import { getAvailableAgents, getOrgAgents } from "@/lib/repositories/agents";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/section";
 import { AgentListTable } from "@/components/agents/agent-list-table";
 
 export default async function DashboardAgentsPage() {
@@ -16,35 +19,47 @@ export default async function DashboardAgentsPage() {
   const availableAgents = await getAvailableAgents(membership.orgId);
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-3xl font-bold">My Agents</h1>
-          <p className="text-muted-foreground">Agents your organization has subscribed to.</p>
-        </div>
-        <Button asChild variant="outline">
-          <Link href="/dashboard/marketplace">Browse marketplace</Link>
-        </Button>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        title="My Agents"
+        subtitle="Manage your subscribed agents and discover new ones from the marketplace."
+        actions={
+          <Button asChild variant="outline">
+            <Link href="/dashboard/marketplace">Open marketplace</Link>
+          </Button>
+        }
+      />
 
-      {subscribedAgents.length ? (
-        <AgentListTable agents={subscribedAgents} mode="subscribed" />
-      ) : (
-        <div className="rounded-lg border bg-card p-6 text-sm text-muted-foreground">No subscribed agents yet.</div>
-      )}
+      <section className="space-y-4">
+        <h2 className="font-[var(--font-heading)] text-xl font-bold">Subscribed</h2>
+        {subscribedAgents.length ? (
+          <AgentListTable agents={subscribedAgents} mode="subscribed" />
+        ) : (
+          <EmptyState
+            icon={Bot}
+            title="No subscribed agents"
+            description="Subscribe to at least one agent to manage it here."
+            action={
+              <Button asChild size="sm">
+                <Link href="/dashboard/marketplace">Browse agents</Link>
+              </Button>
+            }
+          />
+        )}
+      </section>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-3xl font-bold">Discover Agents</h1>
-          <p className="text-muted-foreground">Subscribe to marketplace agents for your organization.</p>
-        </div>
-      </div>
-
-      {availableAgents.length ? (
-        <AgentListTable agents={availableAgents} mode="available" />
-      ) : (
-        <div className="rounded-lg border bg-card p-6 text-sm text-muted-foreground">No agents available yet.</div>
-      )}
+      <section className="space-y-4">
+        <h2 className="font-[var(--font-heading)] text-xl font-bold">Discover</h2>
+        {availableAgents.length ? (
+          <AgentListTable agents={availableAgents} mode="available" />
+        ) : (
+          <EmptyState
+            icon={Store}
+            title="No available agents"
+            description="You are already subscribed to all currently published agents."
+          />
+        )}
+      </section>
     </div>
   );
 }

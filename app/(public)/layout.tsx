@@ -6,7 +6,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen">
       <PublicNav />
-      <main>{children}</main>
+      <main className="pb-6">{children}</main>
       <PublicFooter />
     </div>
   );

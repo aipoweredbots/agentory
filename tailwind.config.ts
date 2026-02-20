@@ -45,6 +45,15 @@ const config: Config = {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)"
       },
+      boxShadow: {
+        soft: "var(--shadow-soft)",
+        card: "var(--shadow-card)",
+        pop: "var(--shadow-pop)"
+      },
+      backgroundImage: {
+        "brand-gradient": "linear-gradient(120deg, hsl(var(--brand-1)), hsl(var(--brand-2)) 55%, hsl(var(--brand-3)))",
+        "brand-radial": "radial-gradient(circle at top left, hsl(var(--brand-1) / 0.16), transparent 45%), radial-gradient(circle at bottom right, hsl(var(--brand-2) / 0.14), transparent 40%)"
+      },
       keyframes: {
         "accordion-down": {
           from: { height: "0" },
@@ -53,11 +62,21 @@ const config: Config = {
         "accordion-up": {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" }
+        },
+        shimmer: {
+          "0%": { transform: "translateX(-120%)" },
+          "100%": { transform: "translateX(220%)" }
+        },
+        "fade-up": {
+          "0%": { opacity: "0", transform: "translateY(8px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" }
         }
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
-        "accordion-up": "accordion-up 0.2s ease-out"
+        "accordion-up": "accordion-up 0.2s ease-out",
+        shimmer: "shimmer 1.8s linear infinite",
+        "fade-up": "fade-up 0.4s ease-out both"
       }
     }
   },

@@ -20,7 +20,10 @@ export function DashboardSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-full border-r bg-card/70 p-4 md:h-[calc(100vh-4rem)] md:w-64 md:sticky md:top-16">
+    <aside className="surface h-fit w-full p-3 md:sticky md:top-20 md:w-72">
+      <div className="mb-3 px-2 pt-1">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Workspace</p>
+      </div>
       <div className="space-y-1">
         {links.map((link) => {
           const ActiveIcon = link.icon;
@@ -30,11 +33,13 @@ export function DashboardSidebar() {
               key={link.href}
               href={link.href}
               className={cn(
-                "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
-                isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                "group flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-all",
+                isActive
+                  ? "bg-brand-gradient text-primary-foreground shadow-soft"
+                  : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"
               )}
             >
-              <ActiveIcon className="h-4 w-4" />
+              <ActiveIcon className={cn("h-4 w-4", !isActive ? "group-hover:text-primary" : "")} />
               {link.label}
             </Link>
           );
@@ -42,7 +47,7 @@ export function DashboardSidebar() {
       </div>
       <Button
         variant="ghost"
-        className="mt-6 w-full justify-start text-muted-foreground hover:text-foreground"
+        className="mt-4 w-full justify-start rounded-xl text-muted-foreground hover:text-foreground"
         onClick={() => clientSignOut("/")}
       >
         <LogOut className="mr-2 h-4 w-4" />

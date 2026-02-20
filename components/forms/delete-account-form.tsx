@@ -47,6 +47,7 @@ export function DeleteAccountForm() {
         <div className="space-y-3">
           <Label htmlFor="deleteConfirm">Confirmation</Label>
           <Input id="deleteConfirm" value={value} onChange={(event) => setValue(event.target.value)} />
+          <p className="text-xs text-muted-foreground">Type exactly DELETE to enable the confirmation button.</p>
           <Button variant="destructive" disabled={!canDelete || pending} onClick={handleDelete}>
             Confirm deletion
           </Button>

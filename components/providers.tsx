@@ -8,7 +8,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       {children}
-      <Toaster richColors position="top-right" />
+      <Toaster richColors position="top-right" toastOptions={{ className: "rounded-xl border border-border/70 bg-card text-foreground" }} />
     </ThemeProvider>
   );
 }

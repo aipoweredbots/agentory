@@ -42,15 +42,15 @@ export function OrgProfileForm({ org }: { org: Organization }) {
       </div>
       <div className="space-y-2">
         <Label htmlFor="orgWebsite">Website</Label>
-        <Input id="orgWebsite" {...form.register("website")} />
+        <Input id="orgWebsite" placeholder="https://company.com" {...form.register("website")} />
         <p className="text-xs text-destructive">{form.formState.errors.website?.message}</p>
       </div>
       <div className="space-y-2">
         <Label htmlFor="orgLogo">Logo URL</Label>
-        <Input id="orgLogo" {...form.register("logoUrl")} />
+        <Input id="orgLogo" placeholder="https://..." {...form.register("logoUrl")} />
         <p className="text-xs text-destructive">{form.formState.errors.logoUrl?.message}</p>
       </div>
-      <Button disabled={pending} type="submit">
+      <Button disabled={pending} type="submit" variant="premium">
         Save changes
       </Button>
     </form>

@@ -36,7 +36,7 @@ export function SubscribeAgentButton({ agentId, isSubscribed }: SubscribeAgentBu
   }
 
   return (
-    <Button className="flex-1" disabled={pending} onClick={onSubscribe}>
+    <Button className="flex-1" disabled={pending} onClick={onSubscribe} variant="premium">
       {pending ? "Subscribing..." : "Subscribe"}
     </Button>
   );

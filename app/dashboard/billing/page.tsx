@@ -1,3 +1,4 @@
+import { CheckCircle2 } from "lucide-react";
 import { getCurrentMembership, requirePageAuth } from "@/lib/auth";
 import { PLAN_LIMITS } from "@/lib/plans";
 import { getSupabaseServerClient } from "@/lib/supabase-server";
@@ -6,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PricingTable } from "@/components/billing/pricing-table";
 import { UsageBars } from "@/components/billing/usage-bars";
+import { PageHeader } from "@/components/ui/section";
 
 export default async function BillingPage() {
   await requirePageAuth("/dashboard/billing");
@@ -34,33 +36,46 @@ export default async function BillingPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Billing & Plan</h1>
-        <p className="text-muted-foreground">Manage subscriptions and monitor consumption.</p>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Current plan: {PLAN_LIMITS[currentPlan].label}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <p className="text-sm text-muted-foreground">
-            Status: {subscription?.status || "ACTIVE"}. Period end:{" "}
-            {subscription?.current_period_end ? new Date(subscription.current_period_end).toLocaleDateString() : "N/A"}
-          </p>
-          <Button asChild variant="outline">
-            <a href="/api/stripe/portal">Manage plan</a>
-          </Button>
-        </CardContent>
-      </Card>
-
-      <UsageBars
-        creditsUsed={usageSummary.usageMonth.creditsUsed}
-        creditsTotal={usageSummary.limits.credits}
-        actionsUsed={usageSummary.usageMonth.actionsUsed}
-        actionsTotal={usageSummary.limits.actions}
-        resetAt={usageSummary.usageMonth.resetAt}
+      <PageHeader
+        title="Billing & Plan"
+        subtitle="Compare plans, monitor usage, and manage your Stripe subscription."
       />
+
+      <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
+        <Card className="brand-aura">
+          <CardHeader>
+            <CardTitle>Current plan: {PLAN_LIMITS[currentPlan].label}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            <p className="text-muted-foreground">
+              Status: {subscription?.status || "ACTIVE"}.
+              {" "}
+              Period end: {subscription?.current_period_end ? new Date(subscription.current_period_end).toLocaleDateString() : "N/A"}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <div className="inline-flex items-center gap-2 rounded-xl border border-border/70 bg-background/70 px-3 py-2">
+                <CheckCircle2 className="h-4 w-4 text-primary" />
+                <span>{PLAN_LIMITS[currentPlan].credits.toLocaleString()} monthly credits</span>
+              </div>
+              <div className="inline-flex items-center gap-2 rounded-xl border border-border/70 bg-background/70 px-3 py-2">
+                <CheckCircle2 className="h-4 w-4 text-primary" />
+                <span>{PLAN_LIMITS[currentPlan].actions.toLocaleString()} monthly actions</span>
+              </div>
+            </div>
+            <Button asChild variant="premium">
+              <a href="/api/stripe/portal">Manage plan</a>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <UsageBars
+          creditsUsed={usageSummary.usageMonth.creditsUsed}
+          creditsTotal={usageSummary.limits.credits}
+          actionsUsed={usageSummary.usageMonth.actionsUsed}
+          actionsTotal={usageSummary.limits.actions}
+          resetAt={usageSummary.usageMonth.resetAt}
+        />
+      </div>
 
       <PricingTable currentPlan={currentPlan} />
     </div>

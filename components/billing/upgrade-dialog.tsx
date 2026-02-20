@@ -24,7 +24,7 @@ export function UpgradeDialog() {
           </DialogDescription>
         </DialogHeader>
         <div className="mt-4 flex gap-2">
-          <Button asChild>
+          <Button asChild variant="premium">
             <Link href="/dashboard/billing" onClick={close}>
               View plans
             </Link>

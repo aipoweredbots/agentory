@@ -4,6 +4,8 @@ import { getCurrentMembership, requirePageAuth } from "@/lib/auth";
 import { getOrgAgentById } from "@/lib/repositories/agents";
 import { hasRequiredRole } from "@/lib/rbac";
 import { AgentForm } from "@/components/agents/agent-form";
+import { PageHeader } from "@/components/ui/section";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default async function EditAgentPage({ params }: { params: { id: string } }) {
   const { id } = params;
@@ -11,7 +13,11 @@ export default async function EditAgentPage({ params }: { params: { id: string }
   const membership = await getCurrentMembership();
 
   if (!membership || !hasRequiredRole(membership.role, [RoleEnum.ADMIN])) {
-    return <div className="rounded-md border bg-card p-4 text-sm">Only Owner/Admin can edit agents.</div>;
+    return (
+      <Card>
+        <CardContent className="pt-6 text-sm">Only Owner/Admin can edit agents.</CardContent>
+      </Card>
+    );
   }
 
   const agent = await getOrgAgentById(membership.orgId, id);
@@ -21,8 +27,8 @@ export default async function EditAgentPage({ params }: { params: { id: string }
   }
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-3xl font-bold">Edit Agent</h1>
+    <div className="space-y-5">
+      <PageHeader title="Edit Agent" subtitle="Update positioning, access rules, and publication settings." />
       <AgentForm agent={agent} />
     </div>
   );

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { ArrowRight, Loader2, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -73,7 +73,6 @@ export function AuthCard({ mode }: { mode: "sign-in" | "sign-up" }) {
         setError(getHumanReadableError(oauthError, "sign in with Google"));
         setIsLoading(false);
       }
-      // Keep loading state until redirect.
     } catch (err) {
       setError(getHumanReadableError(err, "sign in with Google"));
       setIsLoading(false);
@@ -81,18 +80,26 @@ export function AuthCard({ mode }: { mode: "sign-in" | "sign-up" }) {
   };
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="mx-auto w-full max-w-lg">
       <CardHeader>
         <CardTitle>{mode === "sign-in" ? "Welcome back" : "Create your account"}</CardTitle>
         <CardDescription>Continue with Google or request an email magic link.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <Button className="w-full" variant="outline" onClick={handleGoogleSignIn} disabled={isLoading}>
-          {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ArrowRight className="mr-2 h-4 w-4" />}
           Continue with Google
         </Button>
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-border/70" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-card px-2 text-muted-foreground">or</span>
+          </div>
+        </div>
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">Work email</Label>
           <Input
             id="email"
             type="email"
@@ -101,24 +108,24 @@ export function AuthCard({ mode }: { mode: "sign-in" | "sign-up" }) {
             onChange={(event) => setEmail(event.target.value)}
           />
         </div>
-        <Button className="w-full" disabled={!email || pending} onClick={sendMagicLink}>
-          {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+        <Button className="w-full" variant="premium" disabled={!email || pending} onClick={sendMagicLink}>
+          {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />}
           Send magic link
         </Button>
-        {error ? <p className="text-sm text-destructive">{error}</p> : null}
+        {error ? <p className="rounded-lg border border-destructive/35 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p> : null}
       </CardContent>
       <CardFooter className="text-sm text-muted-foreground">
         {mode === "sign-in" ? (
           <span>
             New to Agentory?{" "}
-            <Link className="text-primary" href="/auth/sign-up">
+            <Link className="font-semibold text-primary hover:underline" href="/auth/sign-up">
               Create account
             </Link>
           </span>
         ) : (
           <span>
             Already have an account?{" "}
-            <Link className="text-primary" href="/auth/sign-in">
+            <Link className="font-semibold text-primary hover:underline" href="/auth/sign-in">
               Sign in
             </Link>
           </span>
