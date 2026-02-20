@@ -1,6 +1,6 @@
-# AgentBazaar
+# Agentory
 
-AgentBazaar is a production-ready AI marketplace starter built with Next.js 14 App Router, TypeScript, Tailwind CSS, Supabase Auth + database, and Stripe.
+Agentory is a production-ready AI marketplace starter built with Next.js 14 App Router, TypeScript, Tailwind CSS, Supabase Auth + database, and Stripe.
 
 ## Features
 

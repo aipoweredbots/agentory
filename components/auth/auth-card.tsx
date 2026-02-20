@@ -110,7 +110,7 @@ export function AuthCard({ mode }: { mode: "sign-in" | "sign-up" }) {
       <CardFooter className="text-sm text-muted-foreground">
         {mode === "sign-in" ? (
           <span>
-            New to AgentBazaar?{" "}
+            New to Agentory?{" "}
             <Link className="text-primary" href="/auth/sign-up">
               Create account
             </Link>
