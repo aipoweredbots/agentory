@@ -3,6 +3,8 @@
 @tailwind utilities;
 
 :root {
+  --font-heading: Gilroy, sans-serif;
+  --font-body: Gilroy, sans-serif;
   --radius: 1.1rem;
 
   --background: 228 40% 98%;
