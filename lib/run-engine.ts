@@ -33,7 +33,7 @@ export async function executeAgentRun(params: {
   const supabase = getSupabaseServerClient();
 
   const { data: agent, error: agentError } = await supabase
-    .from("agents")
+    .from("subscribed_agents")
     .select("id,name,slug,category,is_published,premium_only,free_try_enabled")
     .eq("id", agentId)
     .maybeSingle();

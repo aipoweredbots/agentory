@@ -141,7 +141,7 @@ export default async function DashboardHomePage() {
           <Link href="/dashboard/marketplace">Marketplace</Link>
         </Button>
         <Button asChild variant="outline">
-          <Link href="/dashboard/agents">Manage agents</Link>
+          <Link href="/dashboard/agents">Explore agents</Link>
         </Button>
         <Button asChild variant="outline">
           <Link href="/dashboard/org">Organization</Link>

@@ -164,7 +164,7 @@ async function main() {
   }
 
   for (const agent of agents) {
-    const { error: agentError } = await supabase.from("agents").upsert(
+    const { error: agentError } = await supabase.from("subscribed_agents").upsert(
       {
         ...agent,
         is_published: true,

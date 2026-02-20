@@ -33,8 +33,8 @@ type AgentRow = {
   long_description: string;
   is_featured: boolean;
   is_published: boolean;
-  free_try_enabled: boolean;
-  premium_only: boolean;
+  free_trial_enabled: boolean;
+  premiumOnly: boolean;
   created_at: string;
   updated_at: string;
   organizations?: {
@@ -56,8 +56,8 @@ function mapAgent(row: AgentRow): AgentRecord {
     longDescription: row.long_description,
     isFeatured: row.is_featured,
     isPublished: row.is_published,
-    freeTryEnabled: row.free_try_enabled,
-    premiumOnly: row.premium_only,
+    freeTryEnabled: row.free_trial_enabled,
+    premiumOnly: row.premiumOnly,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
     org: row.organizations
@@ -74,7 +74,7 @@ export async function getFeaturedAgents(limit = 3): Promise<AgentRecord[]> {
   const supabase = getSupabaseServerClient();
 
   const { data, error } = await supabase
-    .from("agents")
+    .from("subscribed_agents")
     .select("*")
     .eq("is_published", true)
     .eq("is_featured", true)
@@ -98,7 +98,7 @@ export async function getPublishedAgents(params?: {
   const category = params?.category?.trim();
 
   let request = supabase
-    .from("agents")
+    .from("subscribed_agents")
     .select("*")
     .eq("is_published", true)
     .order("is_featured", { ascending: false })
@@ -135,7 +135,7 @@ export async function getPublishedAgents(params?: {
 export async function getAgentCategories() {
   const supabase = getSupabaseServerClient();
 
-  const { data, error } = await supabase.from("agents").select("category").eq("is_published", true);
+  const { data, error } = await supabase.from("subscribed_agents").select("category").eq("is_published", true);
 
   if (error) {
     throw new Error(`Failed to fetch categories: ${error.message}`);
@@ -150,7 +150,7 @@ export async function getAgentBySlug(slug: string) {
   const supabase = getSupabaseServerClient();
 
   const { data, error } = await supabase
-    .from("agents")
+    .from("subscribed_agents")
     .select("*, organizations ( id, name, slug )")
     .eq("slug", slug)
     .eq("is_published", true)
@@ -167,10 +167,24 @@ export async function getAgentBySlug(slug: string) {
   return mapAgent(data as AgentRow);
 }
 
+export async function getAvailableAgents(orgId: string) {
+  const supabase = getSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("available_agents")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(`Failed to fetch available agents: ${error.message}`);
+  }
+
+  return (data as AgentRow[]).map(mapAgent);
+}
+
 export async function getOrgAgents(orgId: string) {
   const supabase = getSupabaseServerClient();
   const { data, error } = await supabase
-    .from("agents")
+    .from("subscribed_agents")
     .select("*")
     .eq("org_id", orgId)
     .order("created_at", { ascending: false });
@@ -179,13 +193,13 @@ export async function getOrgAgents(orgId: string) {
     throw new Error(`Failed to fetch org agents: ${error.message}`);
   }
 
-  return (data as AgentRow[]).map(mapAgent);
+  return (data);
 }
 
 export async function getOrgAgentById(orgId: string, agentId: string) {
   const supabase = getSupabaseServerClient();
   const { data, error } = await supabase
-    .from("agents")
+    .from("subscribed_agents")
     .select("*")
     .eq("org_id", orgId)
     .eq("id", agentId)
